@@ -5,6 +5,23 @@
  */
 
 function sleep(milliseconds) {
+  const sleep = (time) => {
+    return new Promise((resolve)=>{
+      setTimeout(() => {
+        resolve();
+      }, time);
+    })
+  }
+  
+
+  const asyncSleep = async ()=>{
+    await sleep(milliseconds);
+    return new Promise((resolve)=>{
+      resolve();
+    })
+  }
+
+ return asyncSleep();
 }
 
 module.exports = sleep;

@@ -41,9 +41,105 @@
  */
   const express = require('express');
   const bodyParser = require('body-parser');
+  const fs = require('fs');
+  const { log } = require('console');
+  const { randomUUID } = require('crypto');
   
   const app = express();
-  
   app.use(bodyParser.json());
+  function writeTodos(todos){
+    fs.writeFile('todos.json', JSON.stringify(todos) , err=>{
+      if(err)
+        console.log("Error occured while saving tods");
+    } )
+
+  }
+
+  let todos ;
+  try {
+    todos = fs.readFileSync("todos.json","utf-8");
+    todos = JSON.parse(todos);
+  } catch (error) {
+    console.log("Not able to read the file");    
+  }
+
+  app.get('/todos',(req,res)=>{
+    res.status(200).json(todos);
+  });
+
+  app.get("/todos/:id",(req,res)=>{
+    let id = req.params["id"];
+    result = todos.filter(todo=> {
+      return todo["id"] == id 
+    })
+    if(result.length==1)
+      res.status(200).json(result[0]);
+    else
+      res.status(404).json({error : "Data not found"});
+  })
+
+  app.post('/todos',(req,res)=>{
+    let body = req.body;
+    let todo = {
+      id: randomUUID(),
+      title: body["title"],
+      description: body["description"]
+    }
+    todos.push(todo);
+    writeTodos(todos);
+    res.status(201).json({id: todo["id"]});
+  });
+
+  app.put("/todos/:id",(req,res)=>{
+    let todoId = req.params["id"];
+    let body = req.body;
+    let index = -1;
+    result = todos.filter(todo=> {
+      return todo["id"] == todoId 
+    })
+    if(result.length==1){
+      index = todos.indexOf(result[0]);
+      let todo = {
+        id: result[0]["id"],
+        title: body["title"] || result[0]["title"],
+        description: body["description"] || result[0]["id"]
+      }
+      todos[index]= todo;
+      writeTodos(todos);
+      res.status(200).json(todos);
+    }
+    else
+      res.status(404);
+  })
+
+
   
+  app.delete("/todos/:id",(req,res)=>{
+    let todoId = req.params["id"];
+    let body = req.body;
+    let index = -1;
+    result = todos.filter(todo=> {
+      return todo["id"] == todoId 
+    })
+    if(result.length==1){
+      index = todos.indexOf(result[0]);
+      todos.splice(index,1);
+      writeTodos(todos);
+      res.status(200).json(todos);
+
+    }
+    else
+      res.status(404);
+  })
+
+
+  // app.listen(3000);
+
+
+  
+
+
+
+
+
   module.exports = app;
